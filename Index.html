@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Pengenceran Dextrose by @dokterharun</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f7;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .syringe {
+            width: 100%;
+            height: 150px;
+            background: #f9f9f9;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .chart {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+            transition: all 0.3s ease;
+        }
+
+        .dextrose {
+            background: linear-gradient(to right, #4CAF50, #45a049);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .other {
+            background: linear-gradient(to right, #2196F3, #1976D2);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .measurements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 5px;
+        }
+
+        .measure-line {
+            width: 1px;
+            height: 10px;
+            background: #666;
+        }
+
+        .result {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .result p {
+            margin: 5px 0;
+            font-size: 16px;
+        }
+
+        .result strong {
+            color: #333;
+        }
+
+        .button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .chart-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .dextrose-label {
+            color: #4CAF50;
+        }
+
+        .other-label {
+            color: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Kalkulator Pengenceran Dextrose by @dokterharun</h2>
+        
+        <div class="input-group">
+            <label for="dextroseUsed">Persentase Dextrose yang Digunakan:</label>
+            <select id="dextroseUsed">
+                <option value="">-- Pilih Persentase --</option>
+                <option value="5">5%</option>
+                <option value="10">10%</option>
+                <option value="20">20%</option>
+                <option value="40">40%</option>
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <label for="targetPercent">Target Persentase Dextrose:</label>
+            <select id="targetPercent">
+                <option value="">-- Pilih Persentase --</option>
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <label for="totalInjectant">Jumlah Total Campuran Injectant (cc):</label>
+            <input type="number" id="totalInjectant" min="1" max="50" placeholder="Masukkan jumlah total campuran">
+        </div>
+        
+        <button class="button" onclick="calculate()">HITUNG</button>
+        
+        <div class="syringe">
+            <div class="chart" id="chart">
+                <div class="dextrose" style="width:0%"></div>
+                <div class="other" style="width:0%"></div>
+            </div>
+            <div class="measurements" id="measurements"></div>
+        </div>
+        
+        <!-- Keterangan di bawah syringe -->
+        <div class="chart-labels">
+            <div class="dextrose-label" id="dextroseLabel">D5W: 0 cc</div>
+            <div class="other-label">Injectant Lain: 0 cc</div>
+        </div>
+        
+        <div class="result" id="result">
+            <p>Untuk mendapatkan Dextrose <span id="selectedPercent">0</span>%, dibutuhkan <strong id="dextroseCC">0</strong> cc <span id="usedDextroseLabel">D5W</span>, yang diencerkan dengan <strong id="otherCC">0</strong> cc injectant lain.</p>
+        </div>
+    </div>
+
+    <script>
+        const dextroseUsedSelect = document.getElementById('dextroseUsed');
+        const targetPercentSelect = document.getElementById('targetPercent');
+        const dextroseLabel = document.getElementById('dextroseLabel');
+        const usedDextroseLabel = document.getElementById('usedDextroseLabel');
+
+        // Update opsi target persentase berdasarkan persentase yang digunakan
+        dextroseUsedSelect.addEventListener('change', function() {
+            const selectedValue = parseFloat(this.value);
+            targetPercentSelect.innerHTML = '<option value="">-- Pilih Persentase --</option>';
+            for (let i = 5; i <= selectedValue; i += 5) {
+                targetPercentSelect.innerHTML += `<option value="${i}">${i}%</option>`;
+            }
+
+            // Update label dextrose
+            const dextroseText = `D${selectedValue}W`;
+            dextroseLabel.textContent = `${dextroseText}: 0 cc`;
+            usedDextroseLabel.textContent = dextroseText;
+        });
+
+        function calculate() {
+            const dextroseUsed = parseFloat(dextroseUsedSelect.value) / 100;
+            const targetPercent = parseFloat(targetPercentSelect.value) / 100;
+            const totalInjectant = parseFloat(document.getElementById('totalInjectant').value);
+
+            if (isNaN(dextroseUsed) || isNaN(targetPercent) || isNaN(totalInjectant)) {
+                alert("Harap isi semua field dengan benar!");
+                return;
+            }
+
+            // Hitung jumlah dextrose dan injectant lainnya
+            const dextroseCC = (targetPercent / dextroseUsed) * totalInjectant;
+            const otherCC = totalInjectant - dextroseCC;
+
+            // Update hasil
+            document.getElementById('dextroseCC').textContent = dextroseCC.toFixed(1);
+            document.getElementById('otherCC').textContent = otherCC.toFixed(1);
+            document.getElementById('selectedPercent').textContent = (targetPercent * 100).toFixed(0);
+
+            // Update grafik
+            const dextroseWidth = (dextroseCC / totalInjectant) * 100;
+            document.querySelector('.dextrose').style.width = dextroseWidth + '%';
+            document.querySelector('.other').style.width = (100 - dextroseWidth) + '%';
+
+            // Update keterangan di bawah syringe
+            dextroseLabel.textContent = `D${dextroseUsed * 100}W: ${dextroseCC.toFixed(1)} cc`;
+            document.querySelector('.other-label').textContent = `Injectant Lain: ${otherCC.toFixed(1)} cc`;
+
+            // Update syringe size
+            updateSyringeSize(totalInjectant);
+        }
+
+        function updateSyringeSize(total) {
+            let syringeSize;
+            if (total <= 3) syringeSize = 3;
+            else if (total <= 5) syringeSize = 5;
+            else if (total <= 10) syringeSize = 10;
+            else if (total <= 20) syringeSize = 20;
+            else syringeSize = 50;
+
+            const syringe = document.querySelector('.syringe');
+            syringe.style.height = `${(syringeSize / 50) * 150}px`; // Adjust height based on syringe size
+            updateMeasurements(syringeSize);
+        }
+
+        function updateMeasurements(total) {
+            const measurements = document.getElementById('measurements');
+            measurements.innerHTML = '';
+            for (let i = 0; i <= total; i++) {
+                const measureLine = document.createElement('div');
+                measureLine.className = 'measure-line';
+                measureLine.style.left = `${(i / total) * 100}%`;
+                measurements.appendChild(measureLine);
+            }
+        }
+
+        // Initial setup
+        updateSyringeSize(0);
+    </script>
+</body>
+</html>
